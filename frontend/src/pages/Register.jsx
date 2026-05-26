@@ -9,25 +9,64 @@ function Register() {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState("student")
 
-  // Handle form submission
-  const handleRegister = (event) => {
+  // Success message state
+  const [message, setMessage] = useState("")
+
+  // Handle registration
+  const handleRegister = async (event) => {
 
     // Prevent page refresh
     event.preventDefault()
 
-    // Display form data
-    console.log("Name:", name)
-    console.log("Email:", email)
-    console.log("Password:", password)
-    console.log("Role:", role)
+    // Create user object
+    const userData = {
+      name,
+      email,
+      password,
+      role
+    }
 
-    alert("Registration submitted!")
+    try {
+
+      // Send POST request to backend
+      const response = await fetch(
+        "http://localhost:5000/register",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify(userData)
+        }
+      )
+
+      // Convert response to JSON
+      const data = await response.json()
+
+      console.log(data)
+
+      // Show success message
+      setMessage(data.message)
+
+    } catch (error) {
+
+      console.log(error)
+
+      setMessage("Something went wrong")
+
+    }
+
   }
 
   return (
     <main>
 
       <h2>Create Account</h2>
+
+      {/* Success message */}
+      <p>{message}</p>
 
       {/* Registration Form */}
       <form onSubmit={handleRegister} className="form-container">
