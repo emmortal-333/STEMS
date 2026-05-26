@@ -1,0 +1,116 @@
+/* Remove default spacing */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body styling */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+}
+
+/* Navigation bar */
+nav {
+  background-color: #003366;
+  color: white;
+  padding: 20px;
+}
+
+/* STEMS title */
+nav h1 {
+  font-size: 28px;
+}
+
+/* Main section */
+main {
+  text-align: center;
+  margin-top: 100px;
+  padding: 20px;
+}
+
+/* Main heading */
+main h2 {
+  font-size: 40px;
+  margin-bottom: 20px;
+  color: #003366;
+}
+
+/* Paragraph text */
+main p {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+/* Button styling */
+button {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Button hover effect */
+button:hover {
+  background-color: #0055aa;
+}
+
+/* Navbar layout */
+.navbar {
+  background-color: #003366;
+  color: white;
+  padding: 20px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Navigation links container */
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+/* Navigation links */
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+/* Hover effect */
+.nav-links a:hover {
+  color: #cccccc;
+}
+
+/* Form container */
+.form-container {
+  width: 300px;
+  margin: 30px auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Form inputs */
+.form-container input {
+  padding: 12px;
+  font-size: 16px;
+}
+
+/* Form button */
+.form-container button {
+  width: 100%;
+}
+
+/* Dropdown styling */
+.form-container select {
+  padding: 12px;
+  font-size: 16px;
+}
