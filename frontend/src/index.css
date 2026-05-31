@@ -1,116 +1,179 @@
-/* Remove default spacing */
+/* ==========================================================================
+   1. GLOBAL SYSTEM RESETS & BASICS
+   ========================================================================== */
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  box-sizing: border-box; /* Ensures padding doesn't accidentally increase box widths */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Clean modern font */
 }
 
-/* Body styling */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  background-color: #f4f6f9; /* Soft tech grey background for modern feel */
+  color: #333333;
+  min-height: 100vh;
 }
 
-/* Navigation bar */
-nav {
-  background-color: #003366;
-  color: white;
-  padding: 20px;
-}
-
-/* STEMS title */
-nav h1 {
-  font-size: 28px;
-}
-
-/* Main section */
-main {
-  text-align: center;
-  margin-top: 100px;
-  padding: 20px;
-}
-
-/* Main heading */
-main h2 {
-  font-size: 40px;
-  margin-bottom: 20px;
-  color: #003366;
-}
-
-/* Paragraph text */
-main p {
-  font-size: 18px;
-  margin-bottom: 20px;
-}
-
-/* Button styling */
-button {
-  background-color: #003366;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-/* Button hover effect */
-button:hover {
-  background-color: #0055aa;
-}
-
-/* Navbar layout */
+/* ==========================================================================
+   2. FIXED UNIFIED NAVIGATION BAR
+   ========================================================================== */
 .navbar {
-  background-color: #003366;
-  color: white;
-  padding: 20px;
-
+  background-color: #003366 !important; /* Forces consistent university dark blue */
+  padding: 15px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow underneath the navigation bar */
 }
 
-/* Navigation links container */
+.navbar h2 a {
+  color: #ffffff !important;
+  text-decoration: none;
+  font-size: 24px;
+  letter-spacing: 1px;
+}
+
 .nav-links {
   display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.nav-links a {
+  color: #e2e8f0 !important;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: #ffffff !important;
+}
+
+/* Uniform navigation buttons (e.g. Logout) */
+.nav-links button {
+  background-color: #cc0000;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.nav-links button:hover {
+  background-color: #a30000;
+}
+
+/* ==========================================================================
+   3. PROFESSIONAL PAGE LAYOUT CONTAINERS
+   ========================================================================== */
+main.dashboard {
+  max-width: 1100px;
+  margin: 40px auto; /* Centers the dashboard main content wrapper box area */
+  padding: 0 20px;
+  text-align: left; /* Changes text back from default center layout to pro alignment */
+}
+
+main.dashboard h1 {
+  font-size: 32px;
+  color: #003366;
+  margin-bottom: 25px;
+  font-weight: 700;
+}
+
+/* Profile Metadata Block styling */
+.dashboard div[style*="backgroundColor"] {
+  background-color: #ffffff !important;
+  border-left: 5px solid #003366; /* Elegant accent border line */
+  padding: 20px !important;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  display: flex;
+  gap: 40px; /* Aligns Welcome name and Role horizontally next to each other */
+}
+
+/* ==========================================================================
+   4. EVENT CARDS DISPLAY GRID
+   ========================================================================== */
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important; /* Dynamic Responsive Columns */
+  gap: 25px !important;
+  margin-top: 25px;
+}
+
+.event-card {
+  background-color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 24px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-4px); /* Slight lift effect when mouse hovers over an event */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ==========================================================================
+   5. CENTRALIZED FORM DESIGN SYSTEM (Login, Register, Create Event)
+   ========================================================================== */
+.form-container, form {
+  background-color: #ffffff;
+  max-width: 450px;
+  width: 100%;
+  margin: 60px auto;
+  padding: 35px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 
-/* Navigation links */
-.nav-links a {
-  color: white;
-  text-decoration: none;
-  font-size: 18px;
+.form-container h2, form h1 {
+  color: #003366;
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 10px;
 }
 
-/* Hover effect */
-.nav-links a:hover {
-  color: #cccccc;
-}
-
-/* Form container */
-.form-container {
-  width: 300px;
-  margin: 30px auto;
-
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-/* Form inputs */
-.form-container input {
-  padding: 12px;
-  font-size: 16px;
-}
-
-/* Form button */
-.form-container button {
+.form-container input, .form-container select, form input, form select {
   width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-/* Dropdown styling */
-.form-container select {
-  padding: 12px;
+.form-container input:focus, form input:focus {
+  border-color: #003366;
+  background-color: #ffffff; /* input fields illuminate when active clicked */
+}
+
+/* Action forms submit buttons */
+.form-container button, form button {
+  background-color: #003366;
+  color: white;
+  font-weight: 600;
+  padding: 14px;
   font-size: 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  transition: background 0.2s ease;
+}
+
+.form-container button:hover, form button:hover {
+  background-color: #002244;
 }

@@ -1,50 +1,132 @@
-// Import React state hook
 import { useState } from "react"
 
 function Login() {
 
-  // State variables
+  // Form state
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
-  // Handle form submission
-  const handleLogin = (event) => {
+  // Message state
+  const [message, setMessage] = useState("")
+
+  // Handle login
+  const handleLogin = async (event) => {
 
     // Prevent page refresh
     event.preventDefault()
 
-    // Temporary console output
-    console.log("Email:", email)
-    console.log("Password:", password)
+    try {
 
-    alert("Login submitted!")
+      // Send login request
+      const response = await fetch(
+        "http://localhost:5000/login",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            email,
+            password
+          })
+        }
+      )
+
+      // Convert response
+      const data = await response.json()
+
+      console.log(data)
+
+      // If login successful
+      if (response.ok) {
+
+        // Save user in localStorage
+        localStorage.setItem(
+          "user",
+          JSON.stringify(data.user)
+        )
+
+        setMessage("Login successful")
+
+        // Redirect based on role
+if (data.user.role === "student") {
+
+  window.location.href =
+    "/student-dashboard"
+
+}
+
+else if (
+  data.user.role === "organizer"
+) {
+
+  window.location.href =
+    "/organizer-dashboard"
+
+}
+
+else if (
+  data.user.role === "admin"
+) {
+
+  window.location.href =
+    "/admin-dashboard"
+
+}
+
+      } else {
+
+        setMessage(data.message)
+
+      }
+
+    } catch (error) {
+
+      console.log(error)
+
+      setMessage("Something went wrong")
+
+    }
+
   }
 
   return (
     <main>
 
-      <h2>Login Page</h2>
+      <h2>Login</h2>
+
+      {/* Message */}
+      <p>{message}</p>
 
       {/* Login Form */}
-      <form onSubmit={handleLogin} className="form-container">
+      <form
+        onSubmit={handleLogin}
+        className="form-container"
+      >
 
-        {/* Email Input */}
+        {/* Email */}
         <input
           type="email"
-          placeholder="Enter your email"
+          placeholder="Enter email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) =>
+            setEmail(event.target.value)
+          }
         />
 
-        {/* Password Input */}
+        {/* Password */}
         <input
           type="password"
-          placeholder="Enter your password"
+          placeholder="Enter password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) =>
+            setPassword(event.target.value)
+          }
         />
 
-        {/* Submit Button */}
+        {/* Login button */}
         <button type="submit">
           Login
         </button>
