@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react"
+import { getUser } from "../utils/auth"
+import { apiGet, apiPost } from "../utils/api"
+import EventCard from "../components/EventCard"
 
 function StudentDashboard() {
-  const user = JSON.parse(localStorage.getItem("user"))
+  const user = getUser()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Fetch events with the user's ID as a query parameter
   useEffect(() => {
     if (user) {
-      fetch(`http://localhost:5000/events?userId=${user.id}`)
-        .then((res) => res.json())
+      apiGet(`/events?userId=${user.id}`)
         .then((data) => {
           setEvents(data)
           setLoading(false)
@@ -17,18 +19,18 @@ function StudentDashboard() {
     }
   }, [user])
 
-  const handleRSVP = (eventId) => {
-    fetch("http://localhost:5000/rsvps", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: user.id, event_id: eventId })
-    })
-    .then(res => res.json())
-    .then(data => {
+  const handleRSVP = async (eventId) => {
+    try {
+      const { data } = await apiPost("/rsvps", {
+        user_id: user.id,
+        event_id: eventId
+      })
       alert(data.message)
       // Re-fetch events to update the UI button status
-      window.location.reload() 
-    })
+      window.location.reload()
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   return (
@@ -37,8 +39,7 @@ function StudentDashboard() {
       {loading ? <p>Loading events...</p> : (
         <div className="events-grid">
           {events.map((event) => (
-            <div key={event.id} className="event-card">
-              <h3>{event.title}</h3>
+            <EventCard key={event.id} event={event}>
               <p>📍 Location: {event.location}</p>
               
               {/* Conditional Rendering: If is_attending is 1, show "Already Attending" */}
@@ -51,7 +52,7 @@ function StudentDashboard() {
                   Confirm RSVP
                 </button>
               )}
-            </div>
+            </EventCard>
           ))}
         </div>
       )}

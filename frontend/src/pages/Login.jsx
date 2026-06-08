@@ -1,4 +1,7 @@
 import { useState } from "react"
+import { apiPost } from "../utils/api"
+import { saveUser } from "../utils/auth"
+import { getDashboardPath } from "../utils/roles"
 
 function Login() {
 
@@ -18,24 +21,10 @@ function Login() {
     try {
 
       // Send login request
-      const response = await fetch(
-        "http://localhost:5000/login",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            email,
-            password
-          })
-        }
-      )
-
-      // Convert response
-      const data = await response.json()
+      const { response, data } = await apiPost("/login", {
+        email,
+        password
+      })
 
       console.log(data)
 
@@ -43,38 +32,12 @@ function Login() {
       if (response.ok) {
 
         // Save user in localStorage
-        localStorage.setItem(
-          "user",
-          JSON.stringify(data.user)
-        )
+        saveUser(data.user)
 
         setMessage("Login successful")
 
         // Redirect based on role
-if (data.user.role === "student") {
-
-  window.location.href =
-    "/student-dashboard"
-
-}
-
-else if (
-  data.user.role === "organizer"
-) {
-
-  window.location.href =
-    "/organizer-dashboard"
-
-}
-
-else if (
-  data.user.role === "admin"
-) {
-
-  window.location.href =
-    "/admin-dashboard"
-
-}
+        window.location.href = getDashboardPath(data.user.role)
 
       } else {
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { apiPost } from "../utils/api";
 
 function CreateEvent() {
 
@@ -13,17 +13,14 @@ function CreateEvent() {
 
     try {
 
-      const response = await axios.post(
-        "http://localhost:5000/events",
-        {
-          title,
-          location,
-          event_date: eventDate,
-          organizer_id: 1
-        }
-      );
+      const { data } = await apiPost("/events", {
+        title,
+        location,
+        event_date: eventDate,
+        organizer_id: 1
+      });
 
-      alert(response.data.message);
+      alert(data.message);
 
       setTitle("");
       setLocation("");

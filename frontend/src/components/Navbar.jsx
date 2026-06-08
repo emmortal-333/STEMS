@@ -1,16 +1,18 @@
 import { Link, useNavigate } from "react-router-dom"
+import { getUser, removeUser } from "../utils/auth"
+import { ROLE_DASHBOARD_PATHS } from "../utils/roles"
 
 function Navbar() {
   // Access the browser router navigation controller
   const navigate = useNavigate()
 
   // Get user from localStorage
-  const user = JSON.parse(localStorage.getItem("user"))
+  const user = getUser()
 
   // Logout function
   const handleLogout = () => {
     // 1. Remove user session from browser storage
-    localStorage.removeItem("user")
+    removeUser()
 
     // 2. Safely redirect the user back to the home page or login screen
     navigate("/login")
@@ -67,7 +69,7 @@ function Navbar() {
           <>
             {/* If logged-in user is a student */}
             {user.role === "student" && (
-              <Link to="/student-dashboard" style={{ color: "#fff", textDecoration: "none" }}>
+              <Link to={ROLE_DASHBOARD_PATHS.student} style={{ color: "#fff", textDecoration: "none" }}>
                 My Dashboard
               </Link>
             )}
@@ -75,7 +77,7 @@ function Navbar() {
             {/* If logged-in user is an organizer */}
             {user.role === "organizer" && (
               <>
-                <Link to="/organizer-dashboard" style={{ color: "#fff", textDecoration: "none" }}>
+                <Link to={ROLE_DASHBOARD_PATHS.organizer} style={{ color: "#fff", textDecoration: "none" }}>
                   Org Dashboard
                 </Link>
                 <Link to="/create-event" style={{ color: "#fff", textDecoration: "none" }}>
@@ -86,7 +88,7 @@ function Navbar() {
 
             {/* If logged-in user is an admin */}
             {user.role === "admin" && (
-              <Link to="/admin-dashboard" style={{ color: "#fff", textDecoration: "none" }}>
+              <Link to={ROLE_DASHBOARD_PATHS.admin} style={{ color: "#fff", textDecoration: "none" }}>
                 Admin Panel
               </Link>
             )}
