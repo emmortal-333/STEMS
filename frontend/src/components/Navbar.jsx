@@ -1,11 +1,20 @@
 import { Link, useNavigate } from "react-router-dom"
 
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user"))
+  } catch {
+    localStorage.removeItem("user")
+    return null
+  }
+}
+
 function Navbar() {
   // Access the browser router navigation controller
   const navigate = useNavigate()
 
   // Get user from localStorage
-  const user = JSON.parse(localStorage.getItem("user"))
+  const user = getStoredUser()
 
   // Logout function
   const handleLogout = () => {

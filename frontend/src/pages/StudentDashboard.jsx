@@ -1,20 +1,50 @@
 import { useState, useEffect } from "react"
 
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user"))
+  } catch {
+    localStorage.removeItem("user")
+    return null
+  }
+}
+
 function StudentDashboard() {
-  const user = JSON.parse(localStorage.getItem("user"))
+  const [user] = useState(() => getStoredUser())
   const [events, setEvents] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => getStoredUser() !== null)
+  const [error, setError] = useState("")
 
   // Fetch events with the user's ID as a query parameter
   useEffect(() => {
-    if (user) {
-      fetch(`http://localhost:5000/events?userId=${user.id}`)
-        .then((res) => res.json())
-        .then((data) => {
+    if (!user) {
+      return
+    }
+
+    let cancelled = false
+
+    fetch(`http://localhost:5000/events?userId=${user.id}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to load events")
+        }
+        return res.json()
+      })
+      .then((data) => {
+        if (!cancelled) {
           setEvents(data)
           setLoading(false)
-        })
-    }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch events:", err)
+        if (!cancelled) {
+          setError("Could not load events. Please try again later.")
+          setLoading(false)
+        }
+      })
+
+    return () => { cancelled = true }
   }, [user])
 
   const handleRSVP = (eventId) => {
@@ -23,17 +53,23 @@ function StudentDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: user.id, event_id: eventId })
     })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
       alert(data.message)
-      // Re-fetch events to update the UI button status
-      window.location.reload() 
+      if (ok) {
+        window.location.reload()
+      }
+    })
+    .catch((err) => {
+      console.error("RSVP failed:", err)
+      alert("Could not process RSVP. Please try again later.")
     })
   }
 
   return (
     <main className="dashboard">
       <h1>Student Dashboard</h1>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       {loading ? <p>Loading events...</p> : (
         <div className="events-grid">
           {events.map((event) => (

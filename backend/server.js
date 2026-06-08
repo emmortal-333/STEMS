@@ -55,20 +55,24 @@ GET EVENTS ROUTE (Updated to use Database)
 
 // GET all events with attendance status for a specific user
 app.get("/events", (req, res) => {
-  const userId = req.query.userId; // We get the user_id from the URL query string
+  const userId = req.query.userId;
 
-  // We use a LEFT JOIN to get all events, and match them with RSVPs for this specific user
-  const sql = `
-    SELECT e.*, 
-    CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END as is_attending
-    FROM events e
-    LEFT JOIN rsvps r ON e.id = r.event_id AND r.user_id = ?
-    ORDER BY e.event_date DESC
-  `;
+  // If userId is provided, join with RSVPs; otherwise just return all events
+  const sql = userId
+    ? `
+      SELECT e.*, 
+      CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END as is_attending
+      FROM events e
+      LEFT JOIN rsvps r ON e.id = r.event_id AND r.user_id = ?
+      ORDER BY e.event_date DESC
+    `
+    : `SELECT * FROM events ORDER BY event_date DESC`;
 
-  db.query(sql, [userId], (err, results) => {
+  const params = userId ? [userId] : [];
+
+  db.query(sql, params, (err, results) => {
     if (err) {
-      console.log(err);
+      console.error("GET /events error:", err.message);
       return res.status(500).json({ message: "Failed to fetch events" });
     }
     res.json(results);
@@ -99,7 +103,7 @@ app.post("/rsvps", (req, res) => {
   // 3. Run the query on your MySQL connection
   db.query(sql, [user_id, event_id], (err, result) => {
     if (err) {
-      console.log(err)
+      console.error("POST /rsvps error:", err.message)
 
       // Handle duplicate entries gracefully (Error 1062 is MySQL's code for unique constraint violations)
       if (err.errno === 1062) {
@@ -132,8 +136,30 @@ app.post("/register", (req, res) => {
   // Extract frontend data
   const { name, email, password, role } = req.body
 
+  // Validate required fields
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({
+      message: "All fields are required (name, email, password, role)"
+    })
+  }
+
+  const validRoles = ["student", "organizer", "admin"]
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({
+      message: "Invalid role. Must be student, organizer, or admin"
+    })
+  }
+
   // Hash password
-const hashedPassword = bcrypt.hashSync(password, 10)
+  let hashedPassword
+  try {
+    hashedPassword = bcrypt.hashSync(password, 10)
+  } catch (err) {
+    console.error("Password hashing failed:", err.message)
+    return res.status(500).json({
+      message: "Registration failed"
+    })
+  }
 
   // SQL query
   const sql = `
@@ -149,7 +175,13 @@ const hashedPassword = bcrypt.hashSync(password, 10)
 
     if (error) {
 
-      console.log(error)
+      console.error("POST /register error:", error.message)
+
+      if (error.errno === 1062) {
+        return res.status(409).json({
+          message: "An account with this email already exists"
+        })
+      }
 
       return res.status(500).json({
         message: "Registration failed"
@@ -158,7 +190,7 @@ const hashedPassword = bcrypt.hashSync(password, 10)
     }
 
     // Success response
-    res.json({
+    res.status(201).json({
       message: "User registered successfully"
     })
 
@@ -175,6 +207,13 @@ app.post("/events", (req, res) => {
     event_date,
     organizer_id
   } = req.body
+
+  // Validate required fields
+  if (!title || !location || !event_date || !organizer_id) {
+    return res.status(400).json({
+      message: "All fields are required (title, location, event_date, organizer_id)"
+    })
+  }
 
   const sql = `
     INSERT INTO events
@@ -194,7 +233,7 @@ app.post("/events", (req, res) => {
 
       if (err) {
 
-        console.log(err)
+        console.error("POST /events error:", err.message)
 
         return res.status(500).json({
           message: "Failed to create event"
@@ -223,6 +262,13 @@ app.post("/login", (req, res) => {
   // Extract login data
   const { email, password } = req.body
 
+  // Validate required fields
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password are required"
+    })
+  }
+
   // Find user by email
   const sql = `
     SELECT * FROM users
@@ -233,7 +279,7 @@ app.post("/login", (req, res) => {
 
     if (error) {
 
-      console.log(error)
+      console.error("POST /login error:", error.message)
 
       return res.status(500).json({
         message: "Login failed"
@@ -254,10 +300,18 @@ app.post("/login", (req, res) => {
     const user = results[0]
 
     // Compare passwords
-    const passwordMatch = bcrypt.compareSync(
-      password,
-      user.password
-    )
+    let passwordMatch
+    try {
+      passwordMatch = bcrypt.compareSync(
+        password,
+        user.password
+      )
+    } catch (err) {
+      console.error("Password comparison failed:", err.message)
+      return res.status(500).json({
+        message: "Login failed"
+      })
+    }
 
     // Wrong password
     if (!passwordMatch) {
@@ -281,6 +335,14 @@ app.post("/login", (req, res) => {
 
   })
 
+})
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message)
+  res.status(500).json({
+    message: "An unexpected error occurred"
+  })
 })
 
 // Start server

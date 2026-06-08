@@ -5,45 +5,53 @@ function Home() {
 
   // Events state
   const [events, setEvents] = useState([])
+  const [error, setError] = useState("")
 
   // Load events when page opens
   useEffect(() => {
 
-    // Fetch events from backend
-    fetchEvents()
+    const fetchEvents = async () => {
 
-  }, [])
+      try {
 
-  // Function to fetch events
-  const fetchEvents = async () => {
+        // Send GET request
+        const response = await fetch(
+          "http://localhost:5000/events"
+        )
 
-    try {
+        // Check for server errors
+        if (!response.ok) {
+          const data = await response.json()
+          setError(data.message || "Failed to load events")
+          return
+        }
 
-      // Send GET request
-      const response = await fetch(
-        "http://localhost:5000/events"
-      )
+        // Convert response to JSON
+        const data = await response.json()
 
-      // Convert response to JSON
-      const data = await response.json()
+        // Save events in state
+        setEvents(data)
 
-      console.log(data)
+      } catch (error) {
 
-      // Save events in state
-      setEvents(data)
+        console.error("Failed to fetch events:", error)
+        setError("Could not connect to server. Please try again later.")
 
-    } catch (error) {
-
-      console.log(error)
+      }
 
     }
 
-  }
+    fetchEvents()
+
+  }, [])
 
   return (
     <main>
 
       <h1>STEMS Events</h1>
+
+      {/* Error message */}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       {/* Events List */}
       <div className="events-container">

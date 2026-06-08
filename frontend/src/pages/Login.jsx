@@ -84,9 +84,9 @@ else if (
 
     } catch (error) {
 
-      console.log(error)
+      console.error("Login error:", error)
 
-      setMessage("Something went wrong")
+      setMessage("Could not connect to server. Please try again later.")
 
     }
 
