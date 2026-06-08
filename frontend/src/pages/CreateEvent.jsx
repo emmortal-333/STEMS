@@ -13,13 +13,18 @@ function CreateEvent() {
 
     try {
 
+      const token = localStorage.getItem("token")
       const response = await axios.post(
         "http://localhost:5000/events",
         {
           title,
           location,
-          event_date: eventDate,
-          organizer_id: 1
+          event_date: eventDate
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
       );
 

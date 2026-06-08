@@ -9,8 +9,9 @@ function Navbar() {
 
   // Logout function
   const handleLogout = () => {
-    // 1. Remove user session from browser storage
+    // 1. Remove user session and token from browser storage
     localStorage.removeItem("user")
+    localStorage.removeItem("token")
 
     // 2. Safely redirect the user back to the home page or login screen
     navigate("/login")

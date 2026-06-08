@@ -42,11 +42,12 @@ function Login() {
       // If login successful
       if (response.ok) {
 
-        // Save user in localStorage
+        // Save user and token in localStorage
         localStorage.setItem(
           "user",
           JSON.stringify(data.user)
         )
+        localStorage.setItem("token", data.token)
 
         setMessage("Login successful")
 

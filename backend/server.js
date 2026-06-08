@@ -8,15 +8,50 @@ const db = require("./config/db")
 
 const bcrypt = require("bcrypt")
 
+const jwt = require("jsonwebtoken")
+
+const rateLimit = require("express-rate-limit")
+
+const { authenticate, authorize } = require("./middleware/auth")
+
+const {
+  validateRegistration,
+  validateLogin,
+  validateEvent,
+  validateRsvp
+} = require("./middleware/validate")
+
 // Create express app
 const app = express()
 
 // Define server port
 const PORT = 5000
 
-app.use(cors())
+// CORS: only allow requests from the configured frontend origin
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173").split(",")
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error("Not allowed by CORS"))
+    }
+  },
+  credentials: true
+}))
+
 // Middleware to read JSON data
 app.use(express.json())
+
+// Rate limiter for auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { message: "Too many attempts, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false
+})
 
 // Test route
 app.get("/", (req, res) => {
@@ -29,33 +64,13 @@ app.get("/", (req, res) => {
 
 /*
 ===================================
-GET EVENTS ROUTE
-===================================
-*/
-
-// Sample event data
-const events = [
-  {
-    id: 1,
-    title: "Tech Conference",
-    location: "KCA Main Hall"
-  },
-  {
-    id: 2,
-    title: "Cybersecurity Workshop",
-    location: "Lab 3"
-  }
-]
-
-/*
-===================================
 GET EVENTS ROUTE (Updated to use Database)
 ===================================
 */
 
 // GET all events with attendance status for a specific user
 app.get("/events", (req, res) => {
-  const userId = req.query.userId; // We get the user_id from the URL query string
+  const userId = req.query.userId;
 
   // We use a LEFT JOIN to get all events, and match them with RSVPs for this specific user
   const sql = `
@@ -68,7 +83,7 @@ app.get("/events", (req, res) => {
 
   db.query(sql, [userId], (err, results) => {
     if (err) {
-      console.log(err);
+      console.error("Failed to fetch events:", err.code);
       return res.status(500).json({ message: "Failed to fetch events" });
     }
     res.json(results);
@@ -77,31 +92,25 @@ app.get("/events", (req, res) => {
 
 /*
 ===================================
-POST RSVP ROUTE
+POST RSVP ROUTE (Protected)
 ===================================
 */
-app.post("/rsvps", (req, res) => {
-  const { user_id, event_id } = req.body
+app.post("/rsvps", authenticate, validateRsvp, (req, res) => {
+  const { event_id } = req.body
+  const user_id = req.user.id
 
-  // 1. Basic Validation check: Make sure both IDs were actually sent
-  if (!user_id || !event_id) {
-    return res.status(400).json({ 
-      message: "Missing required user_id or event_id" 
-    })
-  }
-
-  // 2. Prepare the SQL insertion command
+  // Prepare the SQL insertion command
   const sql = `
     INSERT INTO rsvps (user_id, event_id) 
     VALUES (?, ?)
   `
 
-  // 3. Run the query on your MySQL connection
+  // Run the query on your MySQL connection
   db.query(sql, [user_id, event_id], (err, result) => {
     if (err) {
-      console.log(err)
+      console.error("RSVP error:", err.code)
 
-      // Handle duplicate entries gracefully (Error 1062 is MySQL's code for unique constraint violations)
+      // Handle duplicate entries gracefully
       if (err.errno === 1062) {
         return res.status(400).json({ 
           message: "You have already RSVP'd for this event!" 
@@ -113,7 +122,7 @@ app.post("/rsvps", (req, res) => {
       })
     }
 
-    // 4. Send back a clean success response code
+    // Send back a clean success response code
     res.status(201).json({ 
       message: "RSVP confirmed successfully!" 
     })
@@ -122,59 +131,74 @@ app.post("/rsvps", (req, res) => {
 
 /*
 ===================================
-REGISTER ROUTE
+REGISTER ROUTE (with validation + rate limiting)
 ===================================
 */
 
 // POST register route
-app.post("/register", (req, res) => {
+app.post("/register", authLimiter, validateRegistration, async (req, res) => {
 
   // Extract frontend data
   const { name, email, password, role } = req.body
 
-  // Hash password
-const hashedPassword = bcrypt.hashSync(password, 10)
+  try {
+    // Hash password (async to avoid blocking the event loop)
+    const hashedPassword = await bcrypt.hash(password, 10)
 
-  // SQL query
-  const sql = `
-    INSERT INTO users (name, email, password, role)
-    VALUES (?, ?, ?, ?)
-  `
+    // SQL query
+    const sql = `
+      INSERT INTO users (name, email, password, role)
+      VALUES (?, ?, ?, ?)
+    `
 
-  // Values for query
-  const values = [name, email, hashedPassword, role]
+    // Values for query
+    const values = [name, email, hashedPassword, role]
 
-  // Execute query
-  db.query(sql, values, (error, result) => {
+    // Execute query
+    db.query(sql, values, (error, result) => {
 
-    if (error) {
+      if (error) {
 
-      console.log(error)
+        console.error("Registration error:", error.code)
 
-      return res.status(500).json({
-        message: "Registration failed"
+        if (error.errno === 1062) {
+          return res.status(409).json({
+            message: "An account with this email already exists"
+          })
+        }
+
+        return res.status(500).json({
+          message: "Registration failed"
+        })
+
+      }
+
+      // Success response
+      res.status(201).json({
+        message: "User registered successfully"
       })
 
-    }
-
-    // Success response
-    res.json({
-      message: "User registered successfully"
     })
-
-  })
+  } catch (error) {
+    console.error("Registration error:", error.message)
+    return res.status(500).json({
+      message: "Registration failed"
+    })
+  }
 
 })
 
-// CREATE EVENT ROUTE
-app.post("/events", (req, res) => {
+// CREATE EVENT ROUTE (Protected: organizer or admin only)
+app.post("/events", authenticate, authorize("organizer", "admin"), validateEvent, (req, res) => {
 
   const {
     title,
     location,
-    event_date,
-    organizer_id
+    event_date
   } = req.body
+
+  // Use authenticated user's ID as organizer
+  const organizer_id = req.user.id
 
   const sql = `
     INSERT INTO events
@@ -194,7 +218,7 @@ app.post("/events", (req, res) => {
 
       if (err) {
 
-        console.log(err)
+        console.error("Event creation error:", err.code)
 
         return res.status(500).json({
           message: "Failed to create event"
@@ -214,11 +238,11 @@ app.post("/events", (req, res) => {
 
 /*
 ===================================
-LOGIN ROUTE
+LOGIN ROUTE (with validation + rate limiting)
 ===================================
 */
 
-app.post("/login", (req, res) => {
+app.post("/login", authLimiter, validateLogin, async (req, res) => {
 
   // Extract login data
   const { email, password } = req.body
@@ -229,11 +253,11 @@ app.post("/login", (req, res) => {
     WHERE email = ?
   `
 
-  db.query(sql, [email], (error, results) => {
+  db.query(sql, [email], async (error, results) => {
 
     if (error) {
 
-      console.log(error)
+      console.error("Login error:", error.code)
 
       return res.status(500).json({
         message: "Login failed"
@@ -241,11 +265,11 @@ app.post("/login", (req, res) => {
 
     }
 
-    // User not found
+    // User not found — use generic message to prevent user enumeration
     if (results.length === 0) {
 
-      return res.status(404).json({
-        message: "User not found"
+      return res.status(401).json({
+        message: "Invalid email or password"
       })
 
     }
@@ -253,31 +277,51 @@ app.post("/login", (req, res) => {
     // Get user from database
     const user = results[0]
 
-    // Compare passwords
-    const passwordMatch = bcrypt.compareSync(
-      password,
-      user.password
-    )
+    try {
+      // Compare passwords (async)
+      const passwordMatch = await bcrypt.compare(
+        password,
+        user.password
+      )
 
-    // Wrong password
-    if (!passwordMatch) {
+      // Wrong password — same generic message
+      if (!passwordMatch) {
 
-      return res.status(401).json({
-        message: "Invalid password"
-      })
+        return res.status(401).json({
+          message: "Invalid email or password"
+        })
 
-    }
-
-    // Successful login
-    res.json({
-      message: "Login successful",
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
       }
-    })
+
+      // Generate JWT token
+      const token = jwt.sign(
+        {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "24h" }
+      )
+
+      // Successful login
+      res.json({
+        message: "Login successful",
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      })
+    } catch (err) {
+      console.error("Login error:", err.message)
+      return res.status(500).json({
+        message: "Login failed"
+      })
+    }
 
   })
 
