@@ -45,16 +45,19 @@ function Register() {
       // Convert response to JSON
       const data = await response.json()
 
-      console.log(data)
-
-      // Show success message
-      setMessage(data.message)
+      if (response.ok) {
+        // Show success message
+        setMessage(data.message)
+      } else {
+        // Show server error message
+        setMessage(data.message || "Registration failed")
+      }
 
     } catch (error) {
 
-      console.log(error)
+      console.error("Registration error:", error)
 
-      setMessage("Something went wrong")
+      setMessage("Could not connect to server. Please try again later.")
 
     }
 

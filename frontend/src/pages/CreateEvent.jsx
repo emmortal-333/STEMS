@@ -31,9 +31,11 @@ function CreateEvent() {
 
     } catch (error) {
 
-      console.log(error);
+      console.error("Create event error:", error);
 
-      alert("Failed to create event");
+      const message =
+        error.response?.data?.message || "Failed to create event. Please try again later.";
+      alert(message);
 
     }
 
