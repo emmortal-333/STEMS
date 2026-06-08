@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom"
+import { getUser } from "../utils/auth"
 
 function ProtectedRoute({
   children,
@@ -6,9 +7,7 @@ function ProtectedRoute({
 }) {
 
   // Get logged-in user
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  )
+  const user = getUser()
 
   // User not logged in
   if (!user) {

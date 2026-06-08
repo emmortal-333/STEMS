@@ -1,5 +1,6 @@
 // Import React state hook
 import { useState } from "react"
+import { apiPost } from "../utils/api"
 
 function Register() {
 
@@ -18,32 +19,15 @@ function Register() {
     // Prevent page refresh
     event.preventDefault()
 
-    // Create user object
-    const userData = {
-      name,
-      email,
-      password,
-      role
-    }
-
     try {
 
       // Send POST request to backend
-      const response = await fetch(
-        "http://localhost:5000/register",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify(userData)
-        }
-      )
-
-      // Convert response to JSON
-      const data = await response.json()
+      const { data } = await apiPost("/register", {
+        name,
+        email,
+        password,
+        role
+      })
 
       console.log(data)
 

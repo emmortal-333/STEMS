@@ -1,5 +1,7 @@
 // Import React hooks
 import { useEffect, useState } from "react"
+import { apiGet } from "../utils/api"
+import EventCard from "../components/EventCard"
 
 function Home() {
 
@@ -8,37 +10,17 @@ function Home() {
 
   // Load events when page opens
   useEffect(() => {
-
-    // Fetch events from backend
-    fetchEvents()
-
-  }, [])
-
-  // Function to fetch events
-  const fetchEvents = async () => {
-
-    try {
-
-      // Send GET request
-      const response = await fetch(
-        "http://localhost:5000/events"
-      )
-
-      // Convert response to JSON
-      const data = await response.json()
-
-      console.log(data)
-
-      // Save events in state
-      setEvents(data)
-
-    } catch (error) {
-
-      console.log(error)
-
+    async function fetchEvents() {
+      try {
+        const data = await apiGet("/events")
+        console.log(data)
+        setEvents(data)
+      } catch (error) {
+        console.log(error)
+      }
     }
-
-  }
+    fetchEvents()
+  }, [])
 
   return (
     <main>
@@ -51,13 +33,7 @@ function Home() {
         {
           events.map((event) => (
 
-            <div key={event.id} className="event-card">
-
-              <h3>{event.title}</h3>
-
-              <p>{event.location}</p>
-
-            </div>
+            <EventCard key={event.id} event={event} />
 
           ))
         }
