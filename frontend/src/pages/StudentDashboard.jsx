@@ -18,10 +18,14 @@ function StudentDashboard() {
   }, [user])
 
   const handleRSVP = (eventId) => {
+    const token = localStorage.getItem("token")
     fetch("http://localhost:5000/rsvps", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: user.id, event_id: eventId })
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ event_id: eventId })
     })
     .then(res => res.json())
     .then(data => {

@@ -109,10 +109,6 @@ function Register() {
             Organizer
           </option>
 
-          <option value="admin">
-            Admin
-          </option>
-
         </select>
 
         {/* Submit Button */}
